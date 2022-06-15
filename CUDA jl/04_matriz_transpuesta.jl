@@ -1,6 +1,6 @@
 using CUDA
 
-const global N = 1024
+const global N = 64
 const global BLOC_SIZE = 32
 
 function showArray(a::AbstractArray) 
@@ -24,54 +24,52 @@ function matrix_transpose_naive!(input, output)
 end
 
 function matrix_transpose_shared!(input, output)
-    sharedMemory = CuStaticSharedArray(Int,(BLOC_SIZE,BLOC_SIZE+1))
+    sharedMemory = CUDA.CuStaticSharedArray(Float64,(32 + 1,32))
 
-    #Global Index 
-    indexX::Int = threadIdx().x + blockIdx().x * blockDim().x
-    indexY::Int = threadIdx().y + blockIdx().y * blockDim().y
+    #global index
+    indexX = threadIdx().x + (blockIdx().x-1) * blockDim().x
+    indexY = threadIdx().y + (blockIdx().y-1) * blockDim().y 
 
-    #transposed global memory index 
-    tindexX::Int = threadIdx().x + blockIdx().y * blockDim().x
-    tindexY::Int = threadIdx().y + blockIdx().x * blockDim().y
+    #transposed global index
+    tindexX = threadIdx().x + (blockIdx().y-1) * blockDim().x 
+    tindexY = threadIdx().y + (blockIdx().x-1) * blockDim().y 
 
-    #local index
-    localIndexX::Int = threadIdx().x
-    localIndexY::Int = threadIdx().y
+    #local index 
+    localIndexX = threadIdx().x 
+    localIndexY = threadIdx().y 
+    index = (indexY-1) * 64 + indexX 
+    transposedIndex = (tindexY-1) * 64 + tindexX
 
-    #
-    index = indexY * N + indexX
-    transposedIndex = tindexY * N + tindexX
+    #transposed the matrix in shared memory 
+    #global memory is read in coalesced fashion
 
-    #leyendo de memoria global de manera fusionada y realizando la transposición en memoria compartida
     sharedMemory[localIndexX,localIndexY] = input[index]
-    
-    sync_threads()
-
+    ##syncthreads() ?
+    CUDA.sync_threads()
     output[transposedIndex] = sharedMemory[localIndexY,localIndexX]
-
+    return 
 end
 
 size  = N * N 
 
-a = Array{Int32,size}
-b = Array{Int32,size}
-for i in eachindex(a)
-    a[i] = i
-end
+a = rand(64,64)
+b = similar(a)
 
 d_a = CuArray(a)
 d_b = CuArray(b)
 d_c = CuArray(b)
 
-blockSize = (BLOC_SIZE,BLOC_SIZE+1)
-gridSize  = (N/BLOC_SIZE,N/BLOC_SIZE,1)
+blockSize = (BLOC_SIZE,BLOC_SIZE,1)
+gridSize  = (Int(N/BLOC_SIZE),Int(N/BLOC_SIZE),1)
 
-@cuda threads=blockSize blocks=gridSize matrix_transpose_naive!(da,db)
+#@cuda threads=blockSize blocks=gridSize matrix_transpose_naive!(da,db)
 
-@cuda threads=blockSize blocks=gridSize matrix_transpose_shared!(da,dc)
+@cuda threads=blockSize blocks=gridSize matrix_transpose_shared!(d_a,d_c)
 
 b=Array(d_b)
 c=Array(d_c)
+
+@assert a' == c
 
 #Liberamos la memoria
 d_a = nothing

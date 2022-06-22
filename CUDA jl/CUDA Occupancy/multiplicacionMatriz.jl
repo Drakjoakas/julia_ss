@@ -46,5 +46,20 @@ function main()
     d_C = nothing
 end
 
+#TODO
+#Probar qué es lo que regresa launch_configuration()
+#¿Sirve para un kernel bidimensional?
+#Revisar con el profiler de NVIDIA
+function segmm_gpu_bounded(A,B,C, N, M, K, alpha, beta)
+    kernel  = @cuda launch=false segmm_gpu_kernel(A,B,C,N,M,K, alpha, beta)
+    config  = launch_configuration(kernel.fun)
+    threads = min(N,config.threads)
+    blocks  = cld(N,threads)
+
+    CUDA.@sync begin
+        kernel(A,B,C,N,M,K, alpha, beta; threads, blocks)
+    end
+end
+
 main()
 

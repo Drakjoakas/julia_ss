@@ -12,6 +12,8 @@ function reduction_kernel(d_out, d_in, size)
     #Reducion 
     stride = 1
     while stride < blockDim().x
+        #Mejora en rendimiento: usar operaciones de bits
+        #if (idx & (stride * 2 - 1)) == 0
         if idx % (stride *2) == 0
             s_data[threadIdx().x] += s_data[threadIdx().x + stride]
         end

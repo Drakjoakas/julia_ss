@@ -27,6 +27,37 @@ function reduction_kernel(d_out, d_in, size)
     return nothing
 end
 
+function reduction_kernel_grid_strided_loop(d_out, d_in, size)
+    idx = (blockIdx().x -1) * blockDim().x + threadIdx().x 
+
+    s_data = CuStaticSharedArray(Float32, size)
+
+    #cumulates input with grid-stride loop  and save to the shared memory
+    input = 0.f0
+    for i = idx:(blockDim().x * gridDim().x):size
+        input += g_in[i]
+    end
+    s_data[threadIdx().x] = input
+    CUDA.sync_threads()
+
+    #Reducion 
+    stride = 1
+    while stride < blockDim().x
+        #Mejora en rendimiento: usar operaciones de bits
+        #if (idx & (stride * 2 - 1)) == 0
+        if idx % (stride *2) == 0
+            s_data[threadIdx().x] += s_data[threadIdx().x + stride]
+        end
+        CUDA.sync_threads()
+        global stride *= 2
+    end
+
+    if threadIdx().x == 1
+        d_out[blockIdx().x] = s_data[1]
+    end
+    return nothing
+end
+
 function reduction( d_out, d_in, n_threads, size)
     d_out = d_in
     while size > 1
@@ -38,4 +69,16 @@ function reduction( d_out, d_in, n_threads, size)
         @cuda threads=n_blocks blokcs=n_blocks reduction_kernel(d_out, d_in, size)
         global size = n_blocks
     end
+end
+
+function reduction_w_grid_size(d_out, d_in, n_threads, size)
+    num_sms = 0 #getMultiProcessorCount
+    num_blocks_per_sm = 0 #cudaOccupancyMaxActiveBlocksPerMultiprocessor
+
+    n_blocks = min(num_blocks_per_sm * num_sms, Int((size + n_threads+1)/n_threads))
+    # TODO
+    ##Lanzar kernel
+    #reduction_kernel_grid_strided_loop<<<n_blocks,n_threads,n_threads*sizeof(float),0>>>(params,size)
+    #reduction_kernel_grid_strided_loop<<<1,n_threads,n_threads*sizeof(float),0>>>(params,n_blocks)
+
 end

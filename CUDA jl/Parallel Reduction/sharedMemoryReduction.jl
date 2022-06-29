@@ -3,27 +3,35 @@ using CUDA
 function reduction_kernel(d_out, d_in, size::Integer)
     idx::Int64 = (blockIdx().x -1) * blockDim().x + threadIdx().x 
 
-    s_data = CuDynamicSharedArray(Float32, size)
+    s_data = CUDA.CuDynamicSharedArray(Float64,blockDim().x)
 
     s_data[threadIdx().x] = (idx < size) ? d_in[idx] : 0.0f0
 
     CUDA.sync_threads()
 
-    #Reducion 
-    stride::Int64 = 1
-    while stride < blockDim().x
-        strd::Int64 = stride
+    #Reduccion 
+    #stride::Int64 = 1
+    #while stride < blockDim().x
+    
+    for stride = 1:blockDim().x
+
+        if log(2,stride) % 1 != 0
+            continue
+        end
+        
         #Mejora en rendimiento: usar operaciones de bits
-        if (idx & (strd * 2 - 1)) == 0
+        if (idx & (stride * 2 - 1)) == 0
         #if (idx % (strd * 2)) == 0
-            s_data[threadIdx().x] += s_data[threadIdx().x + strd]
+            tmp::Float64 = s_data[threadIdx().x] + s_data[threadIdx().x + stride]
+            s_data[threadIdx().x] = tmp
         end
         CUDA.sync_threads()
-            
-        global stride <<=  1
+        
+        #newStride = stride * 2
+        #global stride =  newStride
 
     end
-
+    
     if threadIdx().x == 1
         d_out[blockIdx().x] = s_data[1]
     end
@@ -64,14 +72,18 @@ end
 function reduction( d_out, d_in, n_threads, size)
 
     while size > 1
-        sz = length(d_in)
-        n_blocks = div(sz + n_threads-1, n_threads)
+        
+        n_blocks = div(size + n_threads-1, n_threads)
         # TODO
         # lanzamiento en CUDA C:
         # reduction_kernel<<<n_blocks, n_threads, n_threads * sizeof(float), 0>>> (d_out,d_in,size)
         # ¿Qué son el tercer y cuarto parámetro?
-        @cuda threads=n_blocks blocks=n_blocks reduction_kernel(d_out, d_in, sz)
-        global size = n_blocks
+        println("Num Blocks: $n_blocks")
+        @cuda threads=n_threads blocks=n_blocks shmem=(n_threads* sizeof(Float64)) stream=CuStream() reduction_kernel(d_out, d_in, size)
+        #println("#"^64)
+        #println(Array(d_out))
+        size = n_blocks
+        
     end
 end
 
@@ -87,12 +99,14 @@ function reduction_w_grid_size(d_out, d_in, n_threads, size)
 
 end
 
-A = zeros(128)
+A = zeros(100)
 B = similar(A)
 
 for i = eachindex(A)
     A[i] = i
 end
+
+println(A)
 
 d_a = CuArray(A)
 d_b = CuArray(B)

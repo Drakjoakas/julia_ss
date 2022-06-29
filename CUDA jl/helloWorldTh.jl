@@ -5,4 +5,12 @@ function say(num)
     return
 end
 
-@cuda threads = 8 say(42)
+function type()
+    tp = typeof(threadIdx().x)
+    @cuprintln("$(tp == Int64)")
+    return
+end
+
+#@cuda threads = 8 say(42)
+
+@cuda threads=1 type()

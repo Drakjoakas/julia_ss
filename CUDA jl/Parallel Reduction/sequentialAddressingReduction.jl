@@ -19,7 +19,7 @@ function sequential_reduction_kernel(g_out, g_in, size)
         end
         CUDA.sync_threads()
 
-        stride >>= 1
+        global stride >>= 1
     end
 
     if threadIdx().x == 1

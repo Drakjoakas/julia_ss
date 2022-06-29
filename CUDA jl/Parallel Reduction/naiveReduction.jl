@@ -7,15 +7,17 @@ function naive_reduction_kernel(data_out, data_in, stride, size)
     if (idx + stride < size)
         data_out[idx] += data_in[idx + stride]
     end
+    return nothing
 end
 
 function naive_reduction(d_out, d_in, n_threads, size)
     n_blocks = div((size + n_threads -1) , n_threads)
 
-    stride = 1
+    global stride = 1
     while stride < size
-        @cuda threads=n_threads blocks=n_blocks naive_reduction_kernel(d_out, d_in, stride, size)
-        global size *= 2
+        tmp = stride
+        @cuda threads=n_threads blocks=n_blocks naive_reduction_kernel(d_out, d_in, tmp, size)
+        global stride *= 2
     end
 end
 

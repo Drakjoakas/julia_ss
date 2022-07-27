@@ -1,9 +1,9 @@
 using CUDA
 
-function reduction_kernel(d_out, d_in, size::Integer)
+function reduction_kernel(d_out, d_in, size::Integer, threadsPerBlock)
     idx::Int64 = (blockIdx().x -1) * blockDim().x + threadIdx().x 
 
-    s_data = CUDA.CuDynamicSharedArray(Float64,blockDim().x)
+    s_data = CUDA.CuDynamicSharedArray(Float64,threadsPerBlock*2)
 
     s_data[threadIdx().x] = (idx < size) ? d_in[idx] : 0.0f0
 
@@ -12,18 +12,18 @@ function reduction_kernel(d_out, d_in, size::Integer)
     #Reduccion 
     #stride::Int64 = 1
     #while stride < blockDim().x
-    
-    for stride = 1:blockDim().x
+    for stride = 1:(blockDim().x-1)
 
         if log(2,stride) % 1 != 0
             continue
         end
         
         #Mejora en rendimiento: usar operaciones de bits
-        if (idx & (stride * 2 - 1)) == 0
-        #if (idx % (strd * 2)) == 0
-            tmp::Float64 = s_data[threadIdx().x] + s_data[threadIdx().x + stride]
-            s_data[threadIdx().x] = tmp
+        #if (idx & (stride * 2 - 1)) == 0
+        if (idx % (stride * 2)) == 0
+            #tmp::Float64 = s_data[threadIdx().x] + s_data[threadIdx().x + stride]
+            @cuprintln("[$(idx)] = $(data_out[idx]) + [$idx + $stride]$(data_out[idx+stride])")
+            s_data[threadIdx().x] += s_data[threadIdx().x + stride]
         end
         CUDA.sync_threads()
         
@@ -74,14 +74,14 @@ function reduction( d_out, d_in, n_threads, size)
     while size > 1
         
         n_blocks = div(size + n_threads-1, n_threads)
-        # TODO
         # lanzamiento en CUDA C:
         # reduction_kernel<<<n_blocks, n_threads, n_threads * sizeof(float), 0>>> (d_out,d_in,size)
         # ¿Qué son el tercer y cuarto parámetro?
         println("Num Blocks: $n_blocks")
-        @cuda threads=n_threads blocks=n_blocks shmem=(n_threads* sizeof(Float64)) stream=CuStream() reduction_kernel(d_out, d_in, size)
+        memSize = n_threads* sizeof(Float64) * 2
+        @cuda threads=n_threads blocks=n_blocks shmem=memSize #=stream=CuStream()=# reduction_kernel(d_out, d_in, size,n_threads)
         #println("#"^64)
-        #println(Array(d_out))
+        println(Array(d_out))
         size = n_blocks
         
     end

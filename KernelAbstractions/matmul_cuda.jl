@@ -1,8 +1,8 @@
 using CUDA, Test
 
 const M = 256
-const N = 256
-const Ñ = 256 
+const N = 123
+const Ñ = 45 
 
 function matmul_kernel_cu!(a,b,c)
     i = threadIdx().x + (blockIdx().x -1) * blockDim().x
@@ -25,8 +25,8 @@ function matmul_cu(a,b,c)
     end
 
     m,n = size(c)
-    n_threads = (32,32)
-    n_blocks = (div(m,32),div(m,32))
+    n_threads = (16,16)
+    n_blocks = (div(m,16),div(n,16))
     println("$m , $n , $n_threads, $n_blocks")
     @sync @cuda threads=n_threads blocks=n_blocks matmul_kernel_cu!(a,b,c)
 

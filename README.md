@@ -8,11 +8,11 @@ La estructura del repositorio es la siguiente:
 
 ## CUDA_jl.ipynb
 
-Explica las bases y el funcionamiento del paquete (`CUDA.jl`)[https://github.com/JuliaGPU/CUDA.jl], incluyendo la abstracción de más alto nivel, algunos métodos especiales y cómo lanzar kernels, así como una breve introducción al paralelismo.
+Explica las bases y el funcionamiento del paquete [`CUDA.jl`](https://github.com/JuliaGPU/CUDA.jl), incluyendo la abstracción de más alto nivel, algunos métodos especiales y cómo lanzar kernels, así como una breve introducción al paralelismo.
 
 ## LinearAlgebra.ipynb
 
-Contiene la explicación y ejemplos de algunas funciones del paquete de Julia (`LinearAlgebra.jl`)[https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/], el cual permite realizar varias operaciones de álgebra lineal.
+Contiene la explicación y ejemplos de algunas funciones del paquete de Julia [`LinearAlgebra.jl`](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/), el cual permite realizar varias operaciones de álgebra lineal.
 
 ## MultipleDispatch.ipynb 
 
@@ -24,7 +24,7 @@ Explicación sencilla del manejo de los **tipos de datos** en el lenguaje Julia.
 
 ## Tullio.ipynb
 
-Notebook que contiene una revisión al paquete (`Tullio.jl`)[https://github.com/mcabbott/Tullio.jl], su funcionamiento y significado y algunos ejemplos mostrando la salida para facilitar la comprensión del paquete. Además, se revisa de igual manera funciones y configuración de la biblioteca.
+Notebook que contiene una revisión al paquete [`Tullio.jl`](https://github.com/mcabbott/Tullio.jl), su funcionamiento y significado y algunos ejemplos mostrando la salida para facilitar la comprensión del paquete. Además, se revisa de igual manera funciones y configuración de la biblioteca.
 
 ## Cuda jl
 
@@ -33,8 +33,8 @@ _Nota: Los ejemplos de Parallel Reduction aun no funcionan. Únicamente la imple
 
 ## KernelAbstractions
 
-En la carpeta se encuentran varios archivos que explican cómo utilizar el paquete (`KernelAbstractions.jl`)[https://github.com/JuliaGPU/KernelAbstractions.jl] así como su comparación con CUDA.jl. De igual manera, hay algunos ejemplos sencillos como realizar la transposición de una matriz o multiplicar dos matrices, usando tanto KernelAbstractions como CUDA.jl.
+En la carpeta se encuentran varios archivos que explican cómo utilizar el paquete [`KernelAbstractions.jl`](https://github.com/JuliaGPU/KernelAbstractions.jl) así como su comparación con CUDA.jl. De igual manera, hay algunos ejemplos sencillos como realizar la transposición de una matriz o multiplicar dos matrices, usando tanto KernelAbstractions como CUDA.jl.
 
 ## Parallel Programming
 
-Notebooks del curso (**Parallel Computing**)[https://juliaacademy.com/p/parallel-computing] de **Julia Academy** donde se explican varios conceptos tanto de Julia como de la programaci
+Notebooks del curso [**Parallel Computing**](https://juliaacademy.com/p/parallel-computing) de **Julia Academy** donde se explican varios conceptos tanto de Julia como de la programaci
